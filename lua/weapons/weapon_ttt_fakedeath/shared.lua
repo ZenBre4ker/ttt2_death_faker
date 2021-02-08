@@ -70,7 +70,7 @@ local function firstToUpper(str)
 end
 
 local function GetSidekickTableForRole(role)
-	if role != nil then
+	if role ~= nil then
 		local siki_deagle = GetEquipmentByName("weapon_ttt2_sidekickdeagle")
 		if istable(siki_deagle) and istable(siki_deagle.CanBuy) and table.HasValue(siki_deagle.CanBuy, role.index) and isfunction(GetDarkenColor) then
 			local siki_mod_table =  table.Copy(GetRoleByIndex(ROLE_SIDEKICK))
@@ -95,7 +95,7 @@ if CLIENT then
 			if role == ROLE_SIDEKICK then
 				color = net.ReadColor()
 			end
-			
+
 			DFROLES.Roles[#DFROLES.Roles + 1] = {
 				role,
 				firstToUpper(v.name),
@@ -103,34 +103,34 @@ if CLIENT then
 			}
 		end
 	end)
-	
+
 	net.Receive("TTTDFTrackNotification", function()
 		local tracked = net.ReadEntity()
 		local startTime = CurTime()
-		
-		if(LocalPlayer().trackedDFPlayers == nil or LocalPlayer().trackedDFStarttimes == nil) then
+
+		if (LocalPlayer().trackedDFPlayers == nil or LocalPlayer().trackedDFStarttimes == nil) then
 			LocalPlayer().trackedDFPlayers = {}
 			LocalPlayer().trackedDFStarttimes = {}
 		end
-		
+
 		table.insert(LocalPlayer().trackedDFPlayers, tracked)
 		table.insert(LocalPlayer().trackedDFStarttimes, startTime)
-		
+
 		local trackingTimeFloat = trackingTime:GetFloat()
-		
+
 		chat.AddText(
 			Color(200, 20, 20),
 			"[Death Faker] ",
 			Color(250, 250, 250),
 			"Your fake body was searched by ",
-			tracked, 
+			tracked,
 			". You will now track him for ",
-			tostring(trackingTimeFloat), 
+			tostring(trackingTimeFloat),
 			" seconds."
 		)
-		
+
 		chat.PlaySound()
-		
+
 	end)
 else
 	hook.Add("TTTBeginRound", "TTTDFInit", function()
@@ -140,7 +140,7 @@ else
 						firstToUpper(TRAITOR.name),
 						TRAITOR.color
 					}}
-					
+
 			local t_siki = GetSidekickTableForRole(TRAITOR)
 			if t_siki then
 				DFROLES.Roles[#DFROLES.Roles + 1] = {
@@ -151,13 +151,13 @@ else
 			end
 
 			for _, v in pairs(GetRoles()) do
-				if IsRoleSelectable(v) && v.index != TRAITOR.index then
+				if IsRoleSelectable(v) and v.index ~= TRAITOR.index then
 					DFROLES.Roles[#DFROLES.Roles + 1] = {
 						v.index,
 						firstToUpper(v.name),
 						v.color
 					}
-					
+
 					local siki = GetSidekickTableForRole(v)
 					if siki then
 						DFROLES.Roles[#DFROLES.Roles + 1] = {
@@ -204,7 +204,7 @@ function SWEP:Initialize()
 
 	self.CurrentRole = DFROLES.Roles[1]
 	self.ReloadingTime = CurTime()
-	
+
 	if CLIENT then
 		if TTT2 then
 			self:AddTTT2HUDHelp("Spawn a corpse", "Quickly change the role of the corpse")
@@ -247,7 +247,7 @@ function SWEP:CreateGUI()
 			ply.df_fakecredits = false
 		end
 	end
-	
+
 	local HeadshotCB = vgui.Create("DCheckBoxLabel", Panel)
 	HeadshotCB:SetText("Headshot")
 	HeadshotCB:SetPos(10, 50)
@@ -361,28 +361,28 @@ function SWEP:CreateGUI()
 		DLabel4:SetPos(10, floatingY)
 		DLabel4:SetSize(100, 20)
 		DLabel4:SetText("Body Class:")
-		
+
 		if not ply.df_class then
 			ply.df_class = 1
 		end
-	
+
 		local ClassComboBox = vgui.Create("DComboBox", Panel)
 		ClassComboBox:SetPos(150, floatingY)
 		ClassComboBox:SetSize(140, 20)
-		
+
 		for _, v in pairs(CLASS.GetSortedClasses()) do
 			ClassComboBox:AddChoice(CLASS.GetClassTranslation(v), v.index, ply.df_class == v.index)
 		end
-		
+
 		ClassComboBox.OnSelect = function(panel, index, _, dat)
 			RunConsoleCommand("ttt_df_select_class", dat)
 
 			ply.df_class = dat
 		end
-		
+
 		floatingY = floatingY + 25
 	end
-	
+
 	local DLabel3 = vgui.Create("DLabel", Panel)
 	DLabel3:SetPos(10, floatingY)
 	DLabel3:SetSize(100, 20)
@@ -420,7 +420,7 @@ function SWEP:CreateGUI()
 end
 
 function SWEP:PrimaryAttack()
-	local ply = self.Owner
+	local ply = self:GetOwner()
 
 	if not IsValid(ply) then return end
 
@@ -442,7 +442,7 @@ function SWEP:SecondaryAttack()
 	if self:GetOwner().df_role then
 		currentRole = self:GetOwner().df_role
 	end
-	
+
 	for k, v in ipairs(DFROLES.Roles) do
 		if v[1] == currentRole then
 			key = k
@@ -476,8 +476,8 @@ end
 function SWEP:BodyDrop()
 	local dmg = DamageInfo()
 
-	local ply = self.Owner
-	
+	local ply = self:GetOwner()
+
 	local dead
 
 	if ply.df_bodyname then
@@ -516,11 +516,11 @@ function SWEP:BodyDrop()
 
 	rag.is_fake = true
 	rag:SetNWBool("IsFakeBody", true)
-	
+
 	rag:SetNWEntity("FakeBodyCreator", ply)
-	
+
 	dead.fake_corpse = rag -- Tie the body to the player
-	
+
 	if TTTC then
 		dead.oldClass = ply.df_class
 	end
@@ -532,13 +532,13 @@ function SWEP:BodyDrop()
 	else
 		rag.dmgwep = ""
 	end
-	
+
 	if not ply.df_headshot then
 		rag.was_headshot = false
 	else
 		rag.was_headshot = ply.df_headshot
 	end
-	
+
 	if not ply.df_fakecredits then
 		rag:SetNWBool("FakeCredits", false)
 	else
@@ -564,9 +564,9 @@ function SWEP:BodyDrop()
 	end
 	dead:SetNWInt("FakeCorpseIndex", key)
 	rag.role_color = DFROLES.Roles[key][3]
-	
+
 	rag:EmitSound("vo/npc/male01/pain07.wav")
-	
+
 	if identify:GetBool() then -- Automatically identify the body after dropping it
 		CORPSE.SetFound(rag, true)
 
@@ -609,7 +609,7 @@ function SWEP:Reload()
 end
 
 function SWEP:OnRemove()
-	if CLIENT and IsValid(self.Owner) and self.Owner == LocalPlayer() and self.Owner:Alive() then
+	if CLIENT and IsValid(self:GetOwner()) and self:GetOwner() == LocalPlayer() and self:GetOwner():Alive() then
 		RunConsoleCommand("lastinv")
 	end
 end
@@ -617,7 +617,7 @@ end
 if SERVER then
 	function SelectHeadshot(ply, cmd, args)
 		if #args ~= 1 then return end
-		
+
 		if args[1] == "0" then
 			ply.df_headshot = false
 		else
@@ -625,7 +625,7 @@ if SERVER then
 		end
 	end
 	concommand.Add("ttt_df_headshot", SelectHeadshot)
-	
+
 	function SelectFakeCredits(ply, cmd, args)
 		if #args ~= 1 then return end
 
@@ -650,7 +650,7 @@ if SERVER then
 		ply.df_role = math.floor(args[1])
 	end
 	concommand.Add("ttt_df_select_role", SelectRole)
-	
+
 	function SelectClass(ply, cmd, args)
 		if #args ~= 1 then return end
 
@@ -683,15 +683,15 @@ if TTT2 then
 
 	hook.Add("TTT2ModifyMiniscoreboardColor", "FakeBodyColorFake", function(ply, col)
 		if IsValid(ply) and ply:GetNWBool("FakedDeath") and ply:TTT2NETGetBool("body_found") then
-			local role = ply:GetNWInt("FakeCorpseRole")
+			--local role = ply:GetNWInt("FakeCorpseRole")
 			local color = Color(0, 0, 0, 0)
 
 
 			local index = ply:GetNWInt("FakeCorpseIndex")
 			color = DFROLES.Roles[index][3]
-			
+
 			color = Color(color.r, color.g, color.b, col.a)
-			
+
 			return color
 		end
 	end)
