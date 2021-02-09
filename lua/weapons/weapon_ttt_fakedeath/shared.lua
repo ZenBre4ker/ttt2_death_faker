@@ -502,15 +502,6 @@ local function changeBodyModel(ply, dead, rag)
 	end
 end
 
--- This function keeps the nickname, but disables any related entity, that could get revived
--- Uses direct Datatable access and needs to be called after setting a nickname
--- TODO: Disable Revive either with this hack or by modifying TTT2 directly
-local function disableRevive(rag)
-	--local dti = CORPSE.dti
-
-	--rag:SetDTEntity(dti.ENT_PLAYER, nil)
-end
-
 function SWEP:BodyDrop()
 	local dmg = DamageInfo()
 
@@ -544,8 +535,6 @@ function SWEP:BodyDrop()
 	local rag = CORPSE.Create(ply, ply, dmg)
 	CORPSE.SetCredits(rag, 0)
 	CORPSE.SetPlayerNick(rag, dead)
-
-	disableRevive(rag) -- TODO: Disable Revive
 
 	if dead ~= ply then changeBodyModel(ply, dead, rag) end
 
