@@ -473,19 +473,53 @@ function SWEP:SecondaryAttack()
 	end
 end
 
+local function changeBodyModel(ply, dead, rag)
+	rag:SetModel(dead:GetModel())
+	rag:SetSkin(dead:GetSkin())
+	rag:SetColor(dead:GetColor())
+
+	-- To enable changes respawn and activate ragdoll again for a new physics model
+	rag:Spawn()
+	rag:Activate()
+
+	-- Get relative position of the using player to the "dead" player
+	local relPos = ply:GetPos() - dead:GetPos()
+	local relAng = ply:GetAngles() - dead:GetAngles()
+
+	-- Now correct the bones
+	local num = (rag:GetPhysicsObjectCount() - 1)
+	for i = 0, num do
+		local bone = rag:GetPhysicsObjectNum(i)
+
+		if IsValid(bone) then
+			local bp, ba = dead:GetBonePosition(rag:TranslatePhysBoneToBone(i))
+
+			if bp and ba then
+				bone:SetPos(bp + relPos)
+				bone:SetAngles(ba + relAng)
+			end
+		end
+	end
+end
+
+-- This function keeps the nickname, but disables any related entity, that could get revived
+-- Uses direct Datatable access and needs to be called after setting a nickname
+-- TODO: Disable Revive either with this hack or by modifying TTT2 directly
+local function disableRevive(rag)
+	--local dti = CORPSE.dti
+
+	--rag:SetDTEntity(dti.ENT_PLAYER, nil)
+end
+
 function SWEP:BodyDrop()
 	local dmg = DamageInfo()
 
 	local ply = self:GetOwner()
 
-	local dead
+	local dead = ply
 
 	if ply.df_bodyname then
-		dead = player.GetByUniqueID(ply.df_bodyname)
-	end
-
-	if not dead then
-		dead = ply
+		dead = player.GetByUniqueID(ply.df_bodyname) or dead
 	end
 
 	dmg:SetAttacker(ply)
@@ -510,6 +544,10 @@ function SWEP:BodyDrop()
 	local rag = CORPSE.Create(ply, ply, dmg)
 	CORPSE.SetCredits(rag, 0)
 	CORPSE.SetPlayerNick(rag, dead)
+
+	disableRevive(rag) -- TODO: Disable Revive
+
+	if dead ~= ply then changeBodyModel(ply, dead, rag) end
 
 	rag.sid = dead:SteamID()
 	rag.sid64 = dead:SteamID64()
